@@ -1,0 +1,277 @@
+
+fun main_001() {
+    val morningNotification = 51
+    val eveningNotification = 135
+    
+    printNotificationSummary(morningNotification)
+    printNotificationSummary(eveningNotification)
+}
+
+fun printNotificationSummary(numberOfMessages: Int) {
+    // Fill in the code.
+    
+	val MAX_NOTIFICATIONS = 100
+
+	val showExactNotifications: Int.() -> Boolean = {this < MAX_NOTIFICATIONS}
+    
+    when(numberOfMessages.showExactNotifications()) {
+        true -> println("You have $numberOfMessages notifications.")
+        false -> println("Your phone is blowing up! You have 99+ notifications.")
+    }
+}
+
+fun main_002() {
+    val child = 5
+    val adult = 28
+    val senior = 87
+    
+    val isMonday = true
+    
+    println("The movie ticket price for a person aged $child is \$${ticketPrice(child, isMonday)}.")
+    println("The movie ticket price for a person aged $adult is \$${ticketPrice(adult, isMonday)}.")
+    println("The movie ticket price for a person aged $senior is \$${ticketPrice(senior, isMonday)}.")
+}
+
+fun ticketPrice(age: Int, isMonday: Boolean): Int {
+    // Fill in the code.
+    
+    val MIN_CHILD_AGE = 0
+    val MAX_CHILD_AGE = 12
+    val MIN_ADULT_AGE = 13
+    val MAX_ADULT_AGE = 60
+    val MIN_SENIOR_AGE = 61
+    val MAX_SENIOR_AGE = 100
+    
+    val adultPrice: Int.(Boolean) -> Int = {discount -> 
+        var result = this
+        if (discount) result = 25
+        result
+    }
+    
+    return when(age) {
+        in MIN_CHILD_AGE..MAX_CHILD_AGE -> 15
+        
+        // receiver function data type solution
+//        in MIN_ADULT_AGE..MAX_ADULT_AGE -> 30.adultPrice(isMonday)
+        // course suggested solution
+        in MIN_ADULT_AGE..MAX_ADULT_AGE -> if (isMonday) 25 else 30
+        in MIN_SENIOR_AGE..MAX_SENIOR_AGE -> 20
+        else -> -1
+    }
+}
+
+fun main_003() {
+    // Fill in the code.
+    printFinalTemperature(27.0, "Celsius", "Fahrenheit", { it * 9.0 / 5.0 + 32.0 })
+    printFinalTemperature(350.0, "Kelvin", "Celsius", { it - 273.15 })
+    printFinalTemperature(10.0, "Fahrenheit", "Kelvin", {(it - 32.0) * 5.0 / 9.0 + 273.15 })
+}
+
+
+fun printFinalTemperature(
+    initialMeasurement: Double, 
+    initialUnit: String, 
+    finalUnit: String, 
+    conversionFormula: (Double) -> Double
+) {
+    val finalMeasurement = String.format("%.2f", conversionFormula(initialMeasurement)) // two decimal places
+    println("$initialMeasurement degrees $initialUnit is $finalMeasurement degrees $finalUnit.")
+}
+
+class Song(val title: String, val artist: String, val yearPublished: Int, val playCount: Int) {
+    
+    // both solutions work
+
+    // my solution
+//	val isPopular = {playCount >= 1000}
+    
+    // course suggested solution
+    val isPopular: Boolean
+    	get() = playCount >= 1000
+    
+    fun printDescription() {
+        println("$title, performed by $artist, was released in $yearPublished.")
+    }
+}
+
+fun main_004() {
+    val favoriteSong = Song("happy birthday", "anyone", 1900, 1000)
+    
+    // my solution
+//    if (favoriteSong.isPopular()) {
+
+	// course suggested solution
+    if (favoriteSong.isPopular) {
+        println("this song is popular")
+    } else {
+        println("this song is not popular")
+    }
+    favoriteSong.printDescription()
+}
+
+fun main_005() {
+    val amanda = Person("Amanda", 33, "play tennis", null)
+//    val amanda = Person("Amanda", 33, null, null)
+    val atiqah = Person("Atiqah", 28, "climb", amanda)
+//    val atiqah = Person("Atiqah", 28, null, amanda)
+    
+    amanda.showProfile()
+    atiqah.showProfile()
+}
+
+
+class Person(val name: String, val age: Int, val hobby: String?, val referrer: Person?) {
+
+    val referrerExists = {referrer != null}
+    
+    val referrerMessage: (Boolean) -> String = { hasReferrer ->
+        when (hasReferrer) {
+            true -> {
+                val sentence1 = "Has a referrer named ${referrer!!.name}"
+                var sentence2 = "."
+                if (referrer!!.hobby != null) {
+                	sentence2 = ", who likes to ${referrer!!.hobby}."
+                }
+                "$sentence1$sentence2"
+            }
+            false -> "Doesn't have a referrer."
+        }
+    }
+    fun showProfile() {
+    	// Fill in code
+        println("Name: $name")
+        println("Age: $age")
+        if (hobby != null) {
+            print("Likes to $hobby. ")
+        }
+        val message = referrerMessage(referrerExists())
+        println("$message")
+        println()
+    }
+}
+
+fun main_006() {
+    val myPhone = FoldablePhone()
+
+    myPhone.switchOn()
+    println(myPhone.checkPhoneScreenLight())
+    
+    myPhone.unFold()
+    myPhone.switchOn()
+    println(myPhone.checkPhoneScreenLight())
+    
+    myPhone.fold()
+    myPhone.switchOn()
+    println(myPhone.checkPhoneScreenLight())
+}
+
+open class Phone(var isScreenLightOn: Boolean = false) {
+    open fun switchOn() {
+        isScreenLightOn = true
+    }
+    
+    fun switchOff() {
+        isScreenLightOn = false
+    }
+    
+    fun checkPhoneScreenLight() {
+        val phoneScreenLight = if (isScreenLightOn) "on" else "off"
+        println("The phone screen's light is $phoneScreenLight.")
+    }
+}
+
+class FoldablePhone(var isFolded: Boolean = true) : Phone() {
+
+    override fun switchOn() {
+        isScreenLightOn = !isFolded && true
+    }
+    
+    fun unFold() {
+        isFolded = false
+    }
+    
+    fun fold() {
+        isFolded = true
+    }
+}
+
+fun main_007() {
+    val winningBid = Bid(5000, "Private Collector")
+    
+    println("Item A is sold at ${auctionPrice(winningBid, 2000)}.")
+    println("Item B is sold at ${auctionPrice(null, 3000)}.")
+}
+
+class Bid(val amount: Int, val bidder: String)
+ 
+fun auctionPrice(bid: Bid?, minimumPrice: Int): Int {
+   // Fill in the code.
+    return bid?.amount ?: minimumPrice
+}
+
+fun main() {
+    
+	// the leafblower problem
+    // return the number of remaining leaves
+    
+    // hear is the leaf grid
+    val leafGrid = arrayOf(
+        arrayOf(0,0,0,0),
+        arrayOf(0,0,0,0),
+        arrayOf(0,1,1,1),
+        arrayOf(0,0,1,1),
+    )
+    
+    val winds = arrayOf("R", "R", "D")
+    
+    val width = 4
+    val height = 4
+    
+    val remainingLeaves = findRemainingLeaves(width, height, leafGrid, winds)
+    
+    println("Final answer: $remainingLeaves remain leaves")
+    
+}
+
+fun findRemainingLeaves(
+    width: Int,
+    height: Int,
+    leafGrid: Array<Array<Int>>,
+    winds: Array<String>): Int {
+    
+    var result = 0
+    
+    for ( row in 0..height-1) {
+        if (!leafGrid[row].contains(1)) {
+            println("no leaves in row $row: skip")
+	        continue
+        }
+        for (column in 0..width-1) {
+            println("analyze position ($row,$column) for remaining leaf.")
+            if (leafGrid[row][column] == 1) {
+	            println("position ($row,$column) has a leaf.")
+                println("apply wind direction to this leaf")
+                var nextRow = row
+                var nextColumn = column
+//                for (direction in winds) {
+                winds.forEach {
+                    when(it) {
+                        "U" -> nextRow--
+                        "D" -> nextRow++
+                        "R" -> nextColumn++
+                        "L" -> nextColumn--
+                    }
+                }
+                if (nextColumn >= 0 && nextColumn < width && nextRow >= 0 && nextRow < height) {
+                    println("This leaf is still on the grid at ($nextRow,$nextColumn)")
+                    result++
+                } else {
+                    println("This leaf is off grid at ($nextRow,$nextColumn)")
+                }
+            }
+        }
+    }
+    
+    return result
+}
+

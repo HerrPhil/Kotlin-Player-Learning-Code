@@ -1,0 +1,254 @@
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
+
+open class SmartDevice(val name: String, val category: String) {
+    var deviceStatus = "online"
+    	protected set
+
+    // Comments for deviceStatus, above.
+	// This is valid for visibility of the setter
+    // protected set(value) {
+    //        field = value
+    //    }
+	// This is valid for visibility of the setter if only default implementation is needed
+    // protected set
+
+    open val deviceType = "unknown"
+    constructor(name: String, category: String, statusCode: Int) : this(name, category) {
+        deviceStatus = when(statusCode) {
+            0 -> "offline"
+            1 -> "online"
+            else -> "unknown"
+        }
+    }
+    open fun turnOn() {
+        deviceStatus = "on"
+        //println("Smart device is turned on.")
+    }
+    open fun turnOff() {
+        deviceStatus = "off"
+        //println("Smart device is turned off.")
+    }
+    
+    fun printDeviceInfo() {
+        println("Device name: $name, category: $category, type: $deviceType")
+    }
+    
+    fun deviceIsOn(): Boolean {
+        return deviceStatus == "on"
+    }
+    
+}
+
+class SmartTvDevice(deviceName: String, deviceCategory: String) :
+    SmartDevice(name = deviceName, category = deviceCategory) {
+
+    override val deviceType = "Smart TV"
+    
+    //private var speakerVolume = 2
+    //set(value) {
+    //    if (value in 1..100) {
+    //        field = value
+    //    }
+    //}
+    private var speakerVolume by RangeRegulator(2, 0, 100)
+
+    //private var channelNumber = 1
+    //set(value) {
+    //    if (value in 1..200) {
+    //        field = value
+    //    }
+    //}
+    private var channelNumber by RangeRegulator(1, 0, 200)
+    
+    fun increaseSpeakerVolume() {
+        speakerVolume++
+        println("Increased speaker volume to $speakerVolume")
+    }
+    
+    fun decreaseSpeakerVolume() {
+        speakerVolume--
+        println("Decreased speaker volume to $speakerVolume")
+    }
+    
+    fun nextChannel() {
+        channelNumber++
+        println("Increased channel number to $channelNumber")
+    }
+    
+    fun previousChannel() {
+        channelNumber--
+        println("Decreased channel number to $channelNumber")        
+    }
+    
+    override fun turnOn() {
+        super.turnOn()
+        println(
+            "$name is turned on. Speaker volume is set to $speakerVolume and channel number is " +
+                "set to $channelNumber."
+        )
+    }
+    
+    override fun turnOff() {
+        super.turnOff()
+        println("$name turned off")
+    }
+
+}
+
+class SmartLightDevice(deviceName: String, deviceCategory: String) :
+    SmartDevice(name = deviceName, category = deviceCategory) {
+
+    override val deviceType = "Smart Light"
+    
+    //private var brightnessLevel = 0
+    //set(value) {
+    //    if (value in 1..100) {
+    //        field = value
+    //    }
+    //}
+    private var brightnessLevel by RangeRegulator(0, 0, 100)
+    
+    fun increaseBrightness() {
+        brightnessLevel++
+        println("Brightness increased to $brightnessLevel")
+    }
+    
+    fun decreaseBrightness() {
+        brightnessLevel--
+        println("Brightness decreased to $brightnessLevel")
+    }
+    
+    // overrides open fun() in SmartDevice
+    override fun turnOn() {
+        super.turnOn()
+        brightnessLevel = 2
+        println("$name turned on. The brightness level is $brightnessLevel.")
+    }
+    
+    // overrides open fun() in SmartDevice
+    override fun turnOff() {
+        super.turnOff()
+        brightnessLevel = 0
+        println("Smart light turned off. The brightness level is $brightnessLevel.")        
+    }
+
+}
+
+class SmartHome(
+    val smartTvDevice: SmartTvDevice,
+    val smartLightDevice: SmartLightDevice
+) {
+    
+    var deviceTurnOnCount = 0
+    private set
+
+    fun turnOnTv() {
+        deviceTurnOnCount++
+        smartTvDevice.turnOn()
+    }
+    
+    fun turnOffTv() {
+        if (!smartTvDevice.deviceIsOn()) return
+        deviceTurnOnCount--
+        smartTvDevice.turnOff()
+    }
+
+    fun increaseTvVolume() {
+        if (!smartTvDevice.deviceIsOn()) return
+        smartTvDevice.increaseSpeakerVolume()
+    }
+
+    fun decreaseTvVolume() {
+        if (!smartTvDevice.deviceIsOn()) return
+        smartTvDevice.decreaseSpeakerVolume()
+    }
+    
+    fun changeTvChannelToNext() {
+        if (!smartTvDevice.deviceIsOn()) return
+        smartTvDevice.nextChannel()
+    }
+    
+    fun changeTvChannelToPrevious() {
+        if (!smartTvDevice.deviceIsOn()) return
+        smartTvDevice.previousChannel()
+    }
+    
+    fun printSmartTvInfo() {
+        smartTvDevice.printDeviceInfo()
+    }
+    
+    fun turnOnLight() {
+        deviceTurnOnCount++
+        smartLightDevice.turnOn()
+    }
+
+    fun turnOffLight() {
+        if (!smartLightDevice.deviceIsOn()) return
+        deviceTurnOnCount--
+        smartLightDevice.turnOff()
+    }
+
+    fun increaseLightBrightness() {
+        if (!smartLightDevice.deviceIsOn()) return
+    	smartLightDevice.increaseBrightness()
+    }
+
+    fun decreaseLightBrightness() {
+        if (!smartLightDevice.deviceIsOn()) return
+    	smartLightDevice.decreaseBrightness()
+    }
+    
+    fun printSmartLightInfo() {
+        smartLightDevice.printDeviceInfo()
+    }
+    
+    fun turnOffAllDevices() {
+        turnOffTv()
+        turnOffLight()
+    }
+
+}
+
+class RangeRegulator(
+    initialValue: Int,
+    private val minValue: Int,
+    private val maxValue: Int
+) : ReadWriteProperty<Any?, Int> {
+    
+    var fieldData = initialValue
+    
+    override fun getValue(thisRef: Any?, property: KProperty<*>): Int {
+        return fieldData
+    }
+    
+    override fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) {
+        if (value in minValue..maxValue) {
+            fieldData = value
+        }
+    }
+}
+
+fun main() {
+
+    val smartTvDevice: SmartTvDevice = SmartTvDevice("Android TV", "Entertainment")
+    
+    val smartLightDevice: SmartLightDevice = SmartLightDevice("Google Light", "Utility")
+    
+    val smartHome: SmartHome = SmartHome(smartTvDevice, smartLightDevice)
+    
+    smartHome.turnOnTv()
+    smartHome.increaseTvVolume()
+    smartHome.decreaseTvVolume()
+    smartHome.changeTvChannelToNext()
+    smartHome.changeTvChannelToPrevious()
+    smartHome.printSmartTvInfo()
+    
+    smartHome.turnOnLight()
+    smartHome.increaseLightBrightness()
+    smartHome.decreaseLightBrightness()
+    smartHome.printSmartLightInfo()
+    
+    smartHome.turnOffAllDevices()
+
+}

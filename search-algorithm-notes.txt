@@ -1,0 +1,137 @@
+Notes about graphs.
+
+There are some core concepts that, actually, are straight-forward.
+
+Graphs are made of edges and vertices.
+
+You can store any data you want in a vertex.
+
+Graphs can be connected or not connected. Most often they are connected.
+
+It is common in leetcode to have a graph where each node has an integer value.
+
+The component with the number is the "vertex" in graph theory.
+
+Generally in computer science, we will call these nodes.
+
+A linked list is a subclass of graphs.
+
+A tree is a subclass of graphs.
+
+A directed graph is a graph in which each edge has a discrete direction from one vertex to another vertex.
+
+An undirected graph is graph in which each edge either indicates two directions or foregoes the direction symbology.
+
+A cyclic graph has a cycle, where there is a path that infinitely traverses the same nodes.
+
+The most common way to store a graph in a computer is with an edge list. This is simply a list of pairs of nodes (integer values)
+
+For example, edge_list = [[0, 1], [0, 3], [1, 2], [3, 4], [3, 6], [3, 7], [4, 2], [4, 5], [5, 2]]
+
+The order of the edge pairs does not matter. Edges are unordered.
+
+Each pair is an edge where we are saying the edge travels from a vertex to a vertex: [from, to].
+
+This pertains to a directed graph. The problem definition would tell us whether graph is directed.
+
+When a graph is undirected, then we read each edge pair like this: [from, to] and [to, from].
+
+The edge list construct is really irritating to work with.
+
+For any algorithm we use with graphs, at a particular location, we are curious know WHERE we are able to go.
+
+We are rarely interested in the graph as a whole.
+
+This gives rise to the "Adjacency Matrix". It is a 2-dimensional array. It has N rows by N columns.
+
+The indices for the rows represent the "from" node. The indices for the columns represent the "to" node.
+
+Here is the adjacency matrix for the aforementioned edge list.
+
+     to --->
+  ** 0 1 2 3 4 5 6 7
+  **
+f 0  0 1 0 1 0 0 0 0
+r 1  0 0 1 0 0 0 0 0
+o 2  0 0 0 0 0 0 0 0
+m 3  0 0 0 0 1 0 1 1
+| 4  0 0 1 0 0 1 0 0
+| 5  0 0 1 0 0 0 0 0
+/ 6  0 0 0 0 0 0 0 0
+  7  0 0 0 0 0 0 0 0
+
+The problem with this adjacency matrix is that we are storing a ton of information.
+
+Another problem is when a node has no connections. Therefore an algorithm would need to loop over a row of zero values to figure that out.
+
+Nomenclature note: It is common to call connected nodes the "neighbour" of the "from" node.
+
+This inefficient data structure gives rise to a performant structure called an "Adjacency List".
+
+For the aforementioned edge list, here is its adjacency list.
+
+{
+	0:[1, 3],
+	1:[2],
+	2:[],
+	3:[4, 6, 7],
+	4:[2, 5],
+	5:[2],
+	6:[],
+	7:[]
+}
+
+This is represented with curly braces to indicate it is a hash map. The keys are the "from" nodes. The value lists are the "to" nodes.
+
+There is one more way to store a graph. A class "Node" can be defined where it has a Node.value and Node.neighbours. The values in in the neighbours list would actually be other Node objects.
+
+Normally with graphs, we do things to traverse them. To do this, a process can do either a depth-first search (DFS) or breadth-first search (BFS) traversal.
+
+DFS traversal (Recursive - with the recursive function call "stack")
+- pick an arbitrary "start" node
+- DFS traversal prioritizes depth; it will follow particular paths.
+- DFS will backtrack once a node is reached with no neighbours.
+- DFS will traverse the path with the next neighbour
+- it is very possible subsequent paths lead to a visited node.
+- it is very important for a traversal to have a "seen" SET (distinct nodes). The "seen" set will start empty at the beginning of the traversal.
+- initialize "seen" set with the start node.
+- in constant time, O(1), we can evaluate whether we have seen a particular node.
+- the seen set solves the problem of cycles in a graph. When a cycle is entered via one node, the seen set stops the cycle from repeating the cycle node that the traversal encountered.
+
+DFS traversal (Iterative - with a Stack data structure)
+- again, initialize the stack with the starting node
+- the loop is "While there is still something on the Stack, do ...
+- pop the top node, and push all of its connections on the Stack.
+- to fix the cycle problem, when you put a node in the Stack, then you immediately put that node in the seen list
+
+BFS traversal (Iterative - with a Queue data structure)
+- start at an arbitrary node
+- again, prepare an empty "seen" list
+- traverse neighbour nodes in order
+- BFS is about spreading yourself thin
+- initialize the queue with the start node, say "0"
+- do the same approach as DFS (stack), however
+- breadth loop: now pop a node from the left side of the queue
+- for current popped node, push neighbours on right side of queue and add to "seen"
+- pop from left side of queue
+- repeat from breadth loop
+
+
+Time and Space Complexity of the Algorithms
+- assume we are using an adjacency list
+- time complexity: for every single node we are taking all of the edges that is has and we are seeing all of its neighbours
+- the components of the graph are described as V and E.
+- V is the number of vertices
+- E is the number of edges
+- for each vertex, we are seeing each of its edges
+- we conclude then that time performance is O(V + E)
+- for space, as an adjacency matrix, it is all vertices and edges; again O(V + E)
+- the presence of a stack or queue or "seen" is storing vertices, therefore O(3V + E) ~ O(V + E)
+
+
+Trees (in context of graphs)
+- a tree is a (1) connected and (2) acyclic graph
+- when a tree has N nodes, or V vertices, then there are E = N -1 edges
+- this property exists because there is one way to get to all nodes
+- if a tree has the same or more edges than nodes, then we know there is a cycle, making the tree cyclic
+- if a tree has fewer edges than nodes then we know the tree (graph) is unconnected

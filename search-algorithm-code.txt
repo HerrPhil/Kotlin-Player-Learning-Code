@@ -1,0 +1,245 @@
+import kotlin.collections.ArrayDeque
+
+fun main() {
+    
+    // normally we are told how many nodes we have
+    val n = 8
+    println(n)
+
+    // start with an array of edges (directed) [Start, End]
+    val E = arrayOf(
+        arrayOf(0, 1),
+        arrayOf(1, 2),
+        arrayOf(0, 3),
+        arrayOf(3, 4),
+        arrayOf(3, 6),
+        arrayOf(3, 7),
+        arrayOf(4, 2),
+        arrayOf(4, 5),
+        arrayOf(5, 2)
+    )
+
+    for(row in E) {
+        val col1 = 0
+        val col2 = 1
+        var a = row[col1]
+        var b = row[col2]
+        println("edge $a, $b")
+    }
+    
+    val matrix = adjacencyMatrixMutable(n, E)
+    
+    matrix?.let {
+        println("there is a matrix")
+	    if (it.isEmpty()) {
+    	    println("empty matrix")
+    	} else {
+        	println("generated matrix")
+    	}
+    }
+
+    
+    val otherMatrix = adjacencyMatrix2DArray(n, E)
+    
+    otherMatrix?.let {
+        println("there is another matrix")
+    	if (it.isEmpty()) {
+        	println("empty other matrix")
+    	} else {
+        	println("generated other matrix")
+            println(println(otherMatrix.contentDeepToString()))
+    	}
+    }
+    
+    val adjacents = adjacencyList(n, E)
+    
+    adjacents?.let {
+        println("there is an adjacency list")
+    	if (it.isEmpty()) {
+        	println("empty adjacency list")
+    	} else {
+        	println("generated adjacency list")
+    	}
+    }
+    
+    // for the trailing lambda expression parameter, print to process
+    val search = Search(n, 0, E) { println("current node: $it") }
+//    search.depthFirstSearch()
+    search.breadthFirstSearch()
+    
+}
+
+// Convert Array of Edges -> Adjacency Matrix
+fun adjacencyMatrixMutable(n: Int, E: Array<Array<Int>>, undirected: Boolean = false): MutableList<MutableList<Int>>? {
+    var M = mutableListOf<MutableList<Int>>()    
+    repeat(n) {
+        val row = mutableListOf<Int>()
+        repeat(n) {
+            row += 0
+        }
+        M += row
+    }
+    // populate the matrix
+    for(edge in E) {
+        val u = edge[0] // from vertex
+        val v = edge[1] // to vertex
+        M[u][v] = 1 // vertex u is adjacent to vertex v, 1 is the existence of a directed edge
+        if (undirected) {
+            M[v][u] = 1
+        }
+    }
+    return M
+}
+
+fun adjacencyMatrix2DArray(n: Int, E: Array<Array<Int>>, undirected: Boolean = false): Array<IntArray>? {
+    var M = Array(n) { IntArray(n) {0} }
+    // populate the matrix
+    for(edge in E) {
+        val u = edge[0] // from vertex
+        val v = edge[1] // to vertex
+        M[u][v] = 1 // vertex u is adjacent to vertex v, 1 is the existence of a directed edge
+        if(undirected) {
+            M[v][u] = 1
+        }
+    }
+    return M
+}
+
+fun adjacencyList(n: Int, E: Array<Array<Int>>, undirected: Boolean = false): Map<Int, MutableList<Int>>? {
+    val mapOfLists: MutableMap<Int, MutableList<Int>> = mutableMapOf()
+    for(edge in E) {
+        val u = edge[0] // from vertex
+        val v = edge[1] // to vertex
+        // vertex u is adjacent to vertex v, 1 is the existence of a directed edge
+        mapOfLists.getOrPut(u, { mutableListOf() }).add(v)
+        if(undirected) {
+	        mapOfLists.getOrPut(v, { mutableListOf() }).add(u)
+        }
+    }
+    
+    mapOfLists.forEach { (key, value) -> println("$key: $value") }
+
+    return mapOfLists
+}
+
+class Search(val n: Int, val source: Int, val E: Array<Array<Int>>, val process: (Int) -> Unit) {
+    
+    private lateinit var mapOfNeighbours: Map<Int, MutableList<Int>>
+    private lateinit var seen: MutableSet<Int>
+    private lateinit var _process: (Int) -> Unit
+    
+    init {
+        adjacencyList(n, E)?.let {
+            mapOfNeighbours = it
+        }
+        seen = mutableSetOf<Int>(source)
+        _process = process
+    }
+
+    fun depthFirstSearch() {
+//        depthFirstSearchRecursive(source)
+//        depthFirstSearchIterative()
+    }
+    
+    fun breadthFirstSearch() {
+        breadthFirstSearchWithQueue()        
+    }
+
+    fun depthFirstSearchRecursive(node: Int) {
+        
+        
+    	// process the node; any processing can go here
+        _process(node)
+        
+        
+        if (mapOfNeighbours.containsKey(node)) {
+            // Note here kotlin needs a guard because a value in a map is nullable.
+            // This enables the following for-loop to inherently call the .iterator() function,
+            // which must have a non-null value to do that.
+            val neighbours: MutableList<Int> = mapOfNeighbours.get(node) ?: mutableListOf<Int>()
+	        for (neighbourNode in neighbours) {
+    	    	if (!seen.contains(neighbourNode)) {
+        	        // first (IMPORTANT) step is mark node as "seen"
+            	    seen.add(neighbourNode)
+                	// second step is traverse by depth on a neighbour node
+                	depthFirstSearchRecursive(neighbourNode)
+        	    }
+                // Otherwise, the "seen" set dies contain this neighbour node,
+                // and, therefore, recursion is skipped.
+    		}
+        }
+        
+        // Otherwise, this node has no neighbours, pop from recursion stack
+    		
+    }
+    
+    fun depthFirstSearchIterative() {
+        // To implement the iterative solution, define a stack of nodes
+        // Delegate to the ArrayQueue data structure,
+        // and remember to addFirst() onto the ArrayQueue,
+        // and removeFirst() from the ArrayQueue.
+        // This will gives us the "stack" behaviour we need.
+        val stack: ArrayDeque<Int> = ArrayDeque()
+        // Immediately add the source to the stack.
+        // It is what we want to visit first.
+        stack.addLast(source) // member value source initialized by constructor
+        
+        // Algorithm to implement DFS - while the stack has values
+        while(!stack.isEmpty()) {
+            val node = stack.removeLast()
+            
+            
+	    // process the node; any processing can go here
+    	    _process(node)
+            
+            
+            // start the iterative algorithm here - very similar to recursive algorithm.
+            if (mapOfNeighbours.containsKey(node)) {
+            	// Note here kotlin needs a guard because a value in a map is nullable.
+            	// This enables the following for-loop to inherently call the .iterator() function,
+            	// which must have a non-null value to do that.
+            	val neighbours: MutableList<Int> = mapOfNeighbours.get(node) ?: mutableListOf<Int>()
+	        for (neighbourNode in neighbours) {
+                    if (!seen.contains(neighbourNode)) {
+			// First (IMPORTANT) step is mark node as "seen"
+    	        	seen.add(neighbourNode)
+                        // Add to stack to process it
+                        stack.addLast(neighbourNode)
+                    } // end-if
+                } // end-for
+            } // end-if
+        } // end-while
+    } // end-fun
+    
+    fun breadthFirstSearchWithQueue() {
+        val queue: ArrayDeque<Int> = ArrayDeque()
+		queue.add(source) // add to the end of the queue
+
+        // Algorithm to implement BFS - while the queue has values
+        while(!queue.isEmpty()) {
+            val node = queue.removeFirst()
+            
+            
+	    // process the node; any processing can go here
+    	    _process(node)
+            
+            
+            // start the iterative algorithm here - very similar to recursive algorithm.
+            if (mapOfNeighbours.containsKey(node)) {
+            	// Note here kotlin needs a guard because a value in a map is nullable.
+            	// This enables the following for-loop to inherently call the .iterator() function,
+            	// which must have a non-null value to do that.
+            	val neighbours: MutableList<Int> = mapOfNeighbours.get(node) ?: mutableListOf<Int>()
+	        for (neighbourNode in neighbours) {
+                    if (!seen.contains(neighbourNode)) {
+			// First (IMPORTANT) step is mark node as "seen"
+    	        	seen.add(neighbourNode)
+                        // Add to stack to process it
+                        queue.addLast(neighbourNode)
+                    } // end-if
+                } // end-for
+            } // end-if
+        } // end-while
+    } // end-fun
+
+}
