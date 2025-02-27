@@ -3,22 +3,33 @@ import kotlin.collections.ArrayDeque
 fun main() {
     
     // normally we are told how many nodes we have
-    val n = 8
-    println(n)
+    val n = 6
+    println("The number of nodes in the edge list: $n")
 
     // start with an array of edges (directed) [Start, End]
+/*
     val E = arrayOf(
-        arrayOf(0, 1),
-        arrayOf(1, 2),
-        arrayOf(0, 3),
-        arrayOf(3, 4),
-        arrayOf(3, 6),
-        arrayOf(3, 7),
-        arrayOf(4, 2),
-        arrayOf(4, 5),
-        arrayOf(5, 2)
+    	arrayOf(0, 1),
+    	arrayOf(1, 2),
+    	arrayOf(0, 3),
+      arrayOf(3, 4),
+      arrayOf(3, 6),
+      arrayOf(3, 7),
+      arrayOf(4, 2),
+      arrayOf(4, 5),
+      arrayOf(5, 2)
+    )
+*/
+	val E = arrayOf(
+    	  arrayOf(0, 1),
+    	  arrayOf(1, 2),
+    	  arrayOf(2, 3),
+        arrayOf(2, 5),
+        arrayOf(3, 5),
+        arrayOf(3, 4)
     )
 
+/*    
     for(row in E) {
         val col1 = 0
         val col2 = 1
@@ -26,15 +37,14 @@ fun main() {
         var b = row[col2]
         println("edge $a, $b")
     }
-    
     val matrix = adjacencyMatrixMutable(n, E)
     
     matrix?.let {
         println("there is a matrix")
-	    if (it.isEmpty()) {
-    	    println("empty matrix")
+	  if (it.isEmpty()) {
+    	  println("empty matrix")
     	} else {
-        	println("generated matrix")
+        println("generated matrix")
     	}
     }
 
@@ -42,31 +52,104 @@ fun main() {
     val otherMatrix = adjacencyMatrix2DArray(n, E)
     
     otherMatrix?.let {
-        println("there is another matrix")
+      println("there is another matrix")
     	if (it.isEmpty()) {
         	println("empty other matrix")
     	} else {
-        	println("generated other matrix")
-            println(println(otherMatrix.contentDeepToString()))
+      		println("generated other matrix")
+      		println(println(otherMatrix.contentDeepToString()))
     	}
     }
+*/    
+
+	val distinctPaths = mutableListOf<MutableList<Int>>()
+	val undirected = true
+	val adjacents = adjacencyList(E, undirected)
     
-    val adjacents = adjacencyList(n, E)
+	adjacents?.let {
+	    for (node in it.keys) {
+              println()
+              println("####")
+              println("####")
+    	        println("aggregate paths for source node $node")
+    
+		  val findFourNodePaths = Path(4, it)
+		  val search = Search(node, it, undirected, findFourNodePaths)
+
+		  //search.start(SearchType.DEPTH_FIRST_SEARCH_RECURSION)
+               //search.start(SearchType.DEPTH_FIRST_SEARCH_ITERATIVE)
+               search.start(SearchType.BREADTH_FIRST_SEARCH)
+            
+               // Get the results of Path
+            
+               val resultsOfPath = findFourNodePaths.paths
+            
+            // paths are direction-agnostic, filter paths
+            // where distinct paths does not contain paths as reversed
+            // filter the result relative to the distinct paths
+            val filteredResultsOfPath = resultsOfPath.filter {
+                !distinctPaths.contains(it)
+                && !distinctPaths.contains(it.reversed())
+            }
+            
+            // Put the filtered results of Path
+            // in the list of distinct paths
+            distinctPaths.addAll(filteredResultsOfPath)
+
+        }
+    }
+
+    // I discovered that, even though the traversal, independent of the path processing,
+    // visited every node once on the connected graph, the path processing was missing
+    // paths. The order in which neighbour nodes are added to the path impacted
+    // the path processing. A simple fix is to reverse the order of the neighbours
+    // in the adjacency list.
+    adjacents?.let {
+        it.forEach { (key, value) ->
+        	value.sortDescending()
+        	println("$key: $value")
+    	}
+    }
     
     adjacents?.let {
-        println("there is an adjacency list")
-    	if (it.isEmpty()) {
-        	println("empty adjacency list")
-    	} else {
-        	println("generated adjacency list")
-    	}
+        for (node in it.keys) {
+    	      println()
+	      println("####")
+            println("####")
+            println("aggregate paths for source node $node")
+    
+            val findFourNodePaths = Path(4, it)
+            val search = Search(node, it, undirected, findFourNodePaths)
+
+            //search.start(SearchType.DEPTH_FIRST_SEARCH_RECURSION)
+            //search.start(SearchType.DEPTH_FIRST_SEARCH_ITERATIVE)
+            search.start(SearchType.BREADTH_FIRST_SEARCH)
+
+            // Get the results of Path
+            
+            val resultsOfPath = findFourNodePaths.paths
+            
+            // paths are direction-agnostic, filter paths
+            // where distinct paths does not contain paths as reversed
+            // filter the result relative to the distinct paths
+            val filteredResultsOfPath = resultsOfPath.filter {
+                !distinctPaths.contains(it)
+                && !distinctPaths.contains(it.reversed())
+            }
+            
+            // Put the filtered results of Path
+            // in the list of distinct paths
+            distinctPaths.addAll(filteredResultsOfPath)
+
+        }
     }
     
-    // for the trailing lambda expression parameter, print to process
-    val search = Search(n, 0, E) { println("current node: $it") }
-//    search.depthFirstSearch()
-    search.breadthFirstSearch()
-    
+    println("Here are the final distinct paths for all starts at each node")
+    for (path in distinctPaths) {
+        println("Path: $path")
+    }
+    println("Done")
+
 }
 
 // Convert Array of Edges -> Adjacency Matrix
@@ -105,7 +188,7 @@ fun adjacencyMatrix2DArray(n: Int, E: Array<Array<Int>>, undirected: Boolean = f
     return M
 }
 
-fun adjacencyList(n: Int, E: Array<Array<Int>>, undirected: Boolean = false): Map<Int, MutableList<Int>>? {
+fun adjacencyList(E: Array<Array<Int>>, undirected: Boolean = false): Map<Int, MutableList<Int>>? {
     val mapOfLists: MutableMap<Int, MutableList<Int>> = mutableMapOf()
     for(edge in E) {
         val u = edge[0] // from vertex
@@ -117,39 +200,123 @@ fun adjacencyList(n: Int, E: Array<Array<Int>>, undirected: Boolean = false): Ma
         }
     }
     
-    mapOfLists.forEach { (key, value) -> println("$key: $value") }
+    mapOfLists.forEach { (key, value) ->
+        value.sort()
+        println("$key: $value")
+    }
 
     return mapOfLists
 }
 
-class Search(val n: Int, val source: Int, val E: Array<Array<Int>>, val process: (Int) -> Unit) {
+interface ProcessNode {
+    fun process(node: Int)
+}
+
+class Path(val length: Int, val adjacents: Map<Int, MutableList<Int>>?) : ProcessNode {
+    private val somePath = mutableListOf<Int>()
+    internal val paths = mutableListOf<MutableList<Int>>()
+    override fun process(node: Int) {
+        println()
+        println("Find path of length $length for node $node")
+        println("State of path before processing: $somePath")
+        println("list generated paths $paths")
+        
+        if (somePath.isEmpty()) {
+            println("path is empty, add $node")
+            somePath.add(node)
+        } else if (somePath.size == 1) {
+            println("path has one node, add $node")
+            somePath.add(node)
+        } else {
+            
+	        val nodeNeighbours = adjacents?.get(node) ?: mutableListOf()
+    	    println("found neighbours of $node: $nodeNeighbours")
+        
+        	// While there are nodes remaining on the path,
+            // and the node neighbours of the current node
+            // do not contain the last node on path,
+            // remove the last node on the path.
+            // Why?
+            // When the last node is not in the current node's neighbours,
+            // then this means the the path direction of the current path
+            // is not the same as the neighbours of the current node.
+            // When the last node in the path is in the set of current node neighbours,
+            // then the path and neighbours are going in the same direction.
+        	while (!somePath.isEmpty() && !nodeNeighbours.contains(somePath.get(somePath.size - 1))) {
+	    	    println("most recent path node not in same direction as current node")
+	    	    println("remove most recent path node")
+            	somePath.removeAt(somePath.size - 1)
+        	}
+	    
+            println("add node to path: $node")
+        	somePath.add(node)
+        
+        	if (somePath.size >= 4) { // when somePath is 4 or more nodes
+
+                println("path of 4 nodes to be saved: $somePath")
+                
+                // store a copy of the path in a list for the final response                
+                paths.add(somePath.toMutableList())
+            	
+                // roll back the last node to be ready for the next node from traversal
+                somePath.removeAt(somePath.size - 1)
+        	}
+            
+        }
+        
+        println("State of path after processing: $somePath")
+
+    }
+}
+
+enum class SearchType {
+    DEPTH_FIRST_SEARCH_RECURSION, DEPTH_FIRST_SEARCH_ITERATIVE, BREADTH_FIRST_SEARCH
+}
+
+class Search(
+    var source: Int,
+    val adjacents: Map<Int, MutableList<Int>>?,
+    val undirected: Boolean = false,
+    val processNode: ProcessNode) {
     
     private lateinit var mapOfNeighbours: Map<Int, MutableList<Int>>
     private lateinit var seen: MutableSet<Int>
-    private lateinit var _process: (Int) -> Unit
+    private lateinit var _processNode: ProcessNode
+    private var badData = false
     
     init {
-        adjacencyList(n, E)?.let {
+        if (undirected) {
+            println("edge list is undirected")
+        } else {
+            println("edge list is directed")
+        }
+        adjacents?.let {
             mapOfNeighbours = it
         }
+        badData = !mapOfNeighbours.keys.contains(source)
         seen = mutableSetOf<Int>(source)
-        _process = process
-    }
-
-    fun depthFirstSearch() {
-//        depthFirstSearchRecursive(source)
-//        depthFirstSearchIterative()
+        _processNode = processNode
+        
+        println("Start at node $source")
     }
     
-    fun breadthFirstSearch() {
-        breadthFirstSearchWithQueue()        
+    fun start(searchType: SearchType = SearchType.DEPTH_FIRST_SEARCH_RECURSION) {
+        if (badData) {
+            println("Oops, bad data of source node $source")
+            return
+        }
+		when(searchType) {
+            SearchType.DEPTH_FIRST_SEARCH_RECURSION -> depthFirstSearchRecursive(source)
+            SearchType.DEPTH_FIRST_SEARCH_ITERATIVE -> depthFirstSearchIterative()
+            SearchType.BREADTH_FIRST_SEARCH -> breadthFirstSearchWithQueue()
+        }        
     }
 
     fun depthFirstSearchRecursive(node: Int) {
+
         
-        
-    	// process the node; any processing can go here
-        _process(node)
+        // process the node; any processing can go here
+        _processNode.process(node)
         
         
         if (mapOfNeighbours.containsKey(node)) {
@@ -171,9 +338,9 @@ class Search(val n: Int, val source: Int, val E: Array<Array<Int>>, val process:
         
         // Otherwise, this node has no neighbours, pop from recursion stack
     		
-    }
+	}
     
-    fun depthFirstSearchIterative() {
+	fun depthFirstSearchIterative() {
         // To implement the iterative solution, define a stack of nodes
         // Delegate to the ArrayQueue data structure,
         // and remember to addFirst() onto the ArrayQueue,
@@ -189,8 +356,9 @@ class Search(val n: Int, val source: Int, val E: Array<Array<Int>>, val process:
             val node = stack.removeLast()
             
             
-	    // process the node; any processing can go here
-    	    _process(node)
+	    	// process the node; any processing can go here
+    	    //_process(node)
+	        _processNode.process(node)
             
             
             // start the iterative algorithm here - very similar to recursive algorithm.
@@ -199,10 +367,10 @@ class Search(val n: Int, val source: Int, val E: Array<Array<Int>>, val process:
             	// This enables the following for-loop to inherently call the .iterator() function,
             	// which must have a non-null value to do that.
             	val neighbours: MutableList<Int> = mapOfNeighbours.get(node) ?: mutableListOf<Int>()
-	        for (neighbourNode in neighbours) {
+	        	for (neighbourNode in neighbours) {
                     if (!seen.contains(neighbourNode)) {
-			// First (IMPORTANT) step is mark node as "seen"
-    	        	seen.add(neighbourNode)
+	        	        // First (IMPORTANT) step is mark node as "seen"
+    	        	    seen.add(neighbourNode)
                         // Add to stack to process it
                         stack.addLast(neighbourNode)
                     } // end-if
@@ -220,8 +388,9 @@ class Search(val n: Int, val source: Int, val E: Array<Array<Int>>, val process:
             val node = queue.removeFirst()
             
             
-	    // process the node; any processing can go here
-    	    _process(node)
+	    	// process the node; any processing can go here
+    	    //_process(node)
+	        _processNode.process(node)
             
             
             // start the iterative algorithm here - very similar to recursive algorithm.
@@ -230,16 +399,17 @@ class Search(val n: Int, val source: Int, val E: Array<Array<Int>>, val process:
             	// This enables the following for-loop to inherently call the .iterator() function,
             	// which must have a non-null value to do that.
             	val neighbours: MutableList<Int> = mapOfNeighbours.get(node) ?: mutableListOf<Int>()
-	        for (neighbourNode in neighbours) {
+	        	for (neighbourNode in neighbours) {
                     if (!seen.contains(neighbourNode)) {
-			// First (IMPORTANT) step is mark node as "seen"
-    	        	seen.add(neighbourNode)
+	        	        // First (IMPORTANT) step is mark node as "seen"
+    	        	    seen.add(neighbourNode)
                         // Add to stack to process it
                         queue.addLast(neighbourNode)
                     } // end-if
                 } // end-for
             } // end-if
         } // end-while
-    } // end-fun
+
+    }
 
 }
